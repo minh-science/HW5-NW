@@ -96,6 +96,9 @@ class NeedlemanWunsch:
                     res_2 += 1
                 elif start is True and res_2 == len(residue_list):
                     break
+        # edit
+        # print(dict_sub)
+        # end edit
         return dict_sub
 
     def align(self, seqA: str, seqB: str) -> Tuple[float, str, str]:
@@ -128,11 +131,112 @@ class NeedlemanWunsch:
         
         # TODO: Initialize matrix private attributes for use in alignment
         # create matrices for alignment scores, gaps, and backtracing
-        pass
+
+
+        # mat_align_score = np.zeros_like()
+        # mat_gaps = 
+        # mat_backtrace =
+
+        print(seqA)
+        print(seqB)
+        m = range(0, len(seqA)+1) # matrix rows
+        n = range(0, len(seqB)+1) # matrix columns
+        M = np.zeros( (len(seqA) + 1, len(seqB) + 1 ) )
+        for i in m:
+            for j in n:
+                if i == 0:
+                    M[i,j] = -np.inf
+                if j == 0:
+                    M[i,j] = -np.inf
+                if i == 0 and j == 0:
+                    M[i,j] = 0
+        print(M)
+
+        # highest gap penalty
+        max_gap = self.gap_open * max(len(m), len(n))
+        print("max gap:", max_gap)
+
+        # extend penalty
+        # self.gap_extend
+
+        # gap penalty matrices
+        I_m_y = np.zeros_like(M)
+        for i in m:
+            for j in n:
+                if i == 0:
+                    I_m_y[i,j] = self.gap_open * j # gap penalties along m columns (x-axis)
+                if j == 0:
+                    I_m_y[i,j] = -np.inf # infinite gap penalty 
+                if i == 0 and j == 0:
+                    I_m_y[i,j] = 0
+        # print(I_m_y)
+
+        I_n_x = np.zeros_like(M)
+        for i in m:
+            for j in n:
+                if i == 0:
+                    I_n_x[i,j] = -np.inf # infinite gap penalty 
+                if j == 0:
+                    I_n_x[i,j] = self.gap_open * i # gap penalties along n rows (y-axis)
+                if j == 0:
+                    if i == 0:
+                        I_n_x[i,j] = 0
+        # print("I_n_x: \n", I_n_x)
+        # pass
+
 
         
         # TODO: Implement global alignment here
-        pass      		
+
+        # print(self.sub_dict.keys() )
+        # print(self.sub_dict[('A', 'A')])
+        # print(self.sub_dict.values())
+
+        # consider each term in matrix M 
+        for i in m:
+            for j in n:
+                if i - 1 in m and j - 1 in n: 
+                    # current match-mismatch penalty
+                    ij_score = self.sub_dict[(f'{seqA[i-1]}', f'{seqB[j-1]}')] 
+                
+                    # for the M matrix
+                    M_i_1 = M[i - 1, j - 1] # get middle weights
+                    # s = M[i,j]
+                    M_score = M[i - 1, j - 1] + ij_score
+
+
+
+                    # for the I_m_y (rows) matrix 
+                    # if I_m_y[i , j - 1 ] < max_gap:
+                    #     print("this is negative", (i,j) )
+                    if I_m_y[i, j - 1] < max_gap:
+                        # print("this is negative inf", (i,j) )
+                        # I_m_y[i,j] = -np.inf
+                        I_m_y_score = I_m_y[i , j - 1]
+                    else:
+                        I_m_y_score = I_m_y[i , j - 1] + self.gap_extend
+
+
+                    # for the I_n_x (columns) matrix 
+                    if I_n_x[i - 1, j] < max_gap:
+                        # print("this is negative inf", (i,j) )
+                        # I_n_x[i,j] = -np.inf
+                        I_n_x_score = I_n_x[i - 1, j]
+                    else:
+                        I_n_x_score = I_n_x[i - 1, j] + self.gap_extend
+
+                    # assign M[i,j] the highest score
+                    M[i,j] = max( [M_score, I_m_y_score, I_n_x_score] )
+
+                    I_n_x[i,j] = max( [M_score, I_n_x_score  ] )
+
+                    I_m_y[i,j] = max( [M_score, I_m_y_score  ] )
+                    print((i,j), M[i,j])
+                # print(self.sub_dict[ (str(i),str(j))] )
+        print("this is the M matrix \n",M)
+        print(I_m_y)
+        print(I_n_x)
+        # pass      		
         		    
         return self._backtrace()
 
@@ -150,9 +254,8 @@ class NeedlemanWunsch:
          	(alignment score, seqA alignment, seqB alignment) : Tuple[float, str, str]
          		the score and corresponding strings for the alignment of seqA and seqB
         """
-        pass
-
-        return (self.alignment_score, self.seqA_align, self.seqB_align)
+        # pass
+        return (self.alignment_score, self.seqA_align, self.seqB_align), print("backtrace!")
 
 
 def read_fasta(fasta_file: str) -> Tuple[str, str]:

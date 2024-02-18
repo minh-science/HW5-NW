@@ -15,11 +15,27 @@ def main():
 
     # TODO Align all species to humans and print species in order of most similar to human BRD
     # using gap opening penalty of -10 and a gap extension penalty of -1 and BLOSUM62 matrix
-    pass
+
+
+    # TESTING    
+    t1_seq, t1_header = read_fasta("./data/test_seq1.fa")
+    t2_seq, t2_header = read_fasta("./data/test_seq2.fa")
+    t3_seq, t3_header = read_fasta("./data/test_seq3.fa")
+    t4_seq, t4_header = read_fasta("./data/test_seq4.fa")
+
+    B = "PAWHEAE"
+    A = "WH"
+    
+    nw_62 = NeedlemanWunsch(sub_matrix_file= "./substitution_matrices/BLOSUM62.mat", gap_open=-10, gap_extend=-1)
+    # nw_62.align(A, B)
+    nw_62.align(t1_seq, t2_seq)
+    # nw_62.align(t3_seq, t4_seq)
+    # end TESTING
 
     # TODO print all of the alignment score between each species BRD2 and human BRD2
     # using gap opening penalty of -10 and a gap extension penalty of -1 and BLOSUM62 matrix
-    pass
+    # pass
+    
     
 
 if __name__ == "__main__":
