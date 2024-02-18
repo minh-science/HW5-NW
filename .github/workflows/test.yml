@@ -31,5 +31,5 @@ jobs:
       
       - name: Run unit tests # delete __pycache__ directory before running actions? 
         run: |
-          ls -a
+          ls test
           python -m pytest -v test/*
