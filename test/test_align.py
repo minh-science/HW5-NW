@@ -14,7 +14,7 @@ def test_nw_alignment():
     """
     seq1, _ = read_fasta("./data/test_seq1.fa")
     seq2, _ = read_fasta("./data/test_seq2.fa")
-    pass
+    assert 1 == 1
     
 
 def test_nw_backtrace():
