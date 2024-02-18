@@ -145,43 +145,43 @@ class NeedlemanWunsch:
         for i in m:
             for j in n:
                 if i == 0:
-                    M[i,j] = -np.inf
+                    M[i,j] = np.NINF
                 if j == 0:
-                    M[i,j] = -np.inf
+                    M[i,j] = np.NINF
                 if i == 0 and j == 0:
                     M[i,j] = 0
-        print(M)
+        # print(M)
 
         # highest gap penalty
         max_gap = self.gap_open * max(len(m), len(n))
-        print("max gap:", max_gap)
+        # print("max gap:", max_gap)
 
         # extend penalty
         # self.gap_extend
 
         # gap penalty matrices
-        I_m_y = np.zeros_like(M)
+        I_A = np.zeros_like(M)
         for i in m:
             for j in n:
                 if i == 0:
-                    I_m_y[i,j] = self.gap_open * j # gap penalties along m columns (x-axis)
+                    I_A[i,j] = self.gap_open + self.gap_extend * j # gap penalties along m columns (x-axis)
                 if j == 0:
-                    I_m_y[i,j] = -np.inf # infinite gap penalty 
+                    I_A[i,j] = np.NINF # infinite gap penalty 
                 if i == 0 and j == 0:
-                    I_m_y[i,j] = 0
-        # print(I_m_y)
+                    I_A[i,j] = 0
+        # print(I_A)
 
-        I_n_x = np.zeros_like(M)
+        I_B = np.zeros_like(M)
         for i in m:
             for j in n:
                 if i == 0:
-                    I_n_x[i,j] = -np.inf # infinite gap penalty 
+                    I_B[i,j] = np.NINF # infinite gap penalty 
                 if j == 0:
-                    I_n_x[i,j] = self.gap_open * i # gap penalties along n rows (y-axis)
+                    I_B[i,j] = self.gap_open + self.gap_extend * i # gap penalties along n rows (y-axis)
                 if j == 0:
                     if i == 0:
-                        I_n_x[i,j] = 0
-        # print("I_n_x: \n", I_n_x)
+                        I_B[i,j] = 0
+        # print("I_B: \n", I_B)
         # pass
 
 
@@ -206,36 +206,23 @@ class NeedlemanWunsch:
 
 
 
-                    # for the I_m_y (rows) matrix 
-                    # if I_m_y[i , j - 1 ] < max_gap:
-                    #     print("this is negative", (i,j) )
-                    if I_m_y[i, j - 1] < max_gap:
-                        # print("this is negative inf", (i,j) )
-                        # I_m_y[i,j] = -np.inf
-                        I_m_y_score = I_m_y[i , j - 1]
-                    else:
-                        I_m_y_score = I_m_y[i , j - 1] + self.gap_extend
-
-
-                    # for the I_n_x (columns) matrix 
-                    if I_n_x[i - 1, j] < max_gap:
-                        # print("this is negative inf", (i,j) )
-                        # I_n_x[i,j] = -np.inf
-                        I_n_x_score = I_n_x[i - 1, j]
-                    else:
-                        I_n_x_score = I_n_x[i - 1, j] + self.gap_extend
 
                     # assign M[i,j] the highest score
-                    M[i,j] = max( [M_score, I_m_y_score, I_n_x_score] )
+                    M[i,j] = max( [M[i - 1, j - 1] + ij_score , I_B[i-1 , j - 1 ]+ij_score, I_A[i - 1 , j-1 ]+ij_score] )
+                    # M[i,j] = 3
 
-                    I_n_x[i,j] = max( [M_score, I_n_x_score  ] )
 
-                    I_m_y[i,j] = max( [M_score, I_m_y_score  ] )
-                    print((i,j), M[i,j])
+                    I_A[i,j] = max( [I_A[i,j-1] + j*self.gap_extend+ ij_score, M[i,j-1] + self.gap_open + j*self.gap_extend + ij_score ]  )
+
+                    I_B[i,j] = max( [I_B[i-1,j] + i*self.gap_extend+ ij_score, M[i-1,j] + self.gap_open + i*self.gap_extend + ij_score ]  )
+                    # print((i,j), M[i,j])
                 # print(self.sub_dict[ (str(i),str(j))] )
         print("this is the M matrix \n",M)
-        print(I_m_y)
-        print(I_n_x)
+        print(I_A)
+        print(I_B)
+        self._align_matrix = M
+        self._gapA_matrix = I_A
+        self._gapB_matrix = I_B
         # pass      		
         		    
         return self._backtrace()
@@ -255,7 +242,84 @@ class NeedlemanWunsch:
          		the score and corresponding strings for the alignment of seqA and seqB
         """
         # pass
-        return (self.alignment_score, self.seqA_align, self.seqB_align), print("backtrace!")
+        M = self._align_matrix 
+        A = self._gapA_matrix 
+        B = self._gapB_matrix
+        m = range(0, len(self._seqA)+1) # matrix rows
+        n = range(0, len(self._seqB)+1) # matrix columns
+        score = 0
+        ij_max = [0, (0,0)]
+        for i in reversed(m):
+            for j in reversed(n):
+                if M[i,j] > ij_max[0]:
+                    ij_max = [M[i,j], (i,j)]
+
+        print(ij_max)
+        m_trace = ij_max[1][0]
+        n_trace = ij_max[1][1]
+
+        A_align = ""
+        B_align = ""
+
+        while m_trace>0 and n_trace>0:
+            # print(max(M[m_trace-1,n_trace-1], A[m_trace-1,n_trace], B[m_trace,n_trace-1]))
+            A_trace = A[m_trace,n_trace-1]
+            B_trace = B[m_trace-1,n_trace]
+            M_trace = M[m_trace-1,n_trace-1]
+            max_trace = max(M_trace, A_trace, B_trace)
+
+            # if max_trace == M_trace :
+            #     print( "M", (M[m_trace-1,n_trace-1],(m_trace-1,n_trace-1))  )
+            #     n_trace += -1
+            #     m_trace += -1
+            # elif max_trace ==  A_trace :
+            #     print("A", (A_trace,(m_trace-1,n_trace))  )
+            #     m_trace += -1
+            # elif max_trace ==  B_trace :
+            #     print("B", (B[m_trace,n_trace-1],(m_trace,n_trace-1))  )
+            #     n_trace += -1
+            # else:
+            #     print(m_trace,n_trace,"|", M_trace, A_trace, B_trace)
+            #     n_trace += -1
+            #     m_trace += -1
+            up = [m_trace-1,n_trace]
+            M_up_trace = M[m_trace-1,n_trace]
+
+            left = [m_trace,n_trace-1]
+            M_left_trace = M[m_trace,n_trace-1]
+
+            max_trace2 = max(M_trace, M_up_trace, M_left_trace)
+            # print("this is the str", str(self._seqA[m_trace-1]))
+
+            # A_align += str(self._seqA[m_trace] )
+            # B_align += str(self._seqB[n_trace] )
+
+            if max_trace2 == M_trace :
+                score += M[m_trace-1,n_trace-1]
+                A_align += str(self._seqA[m_trace-1] )
+                B_align += str(self._seqB[n_trace-1] )
+                n_trace += -1
+                m_trace += -1
+            elif max_trace2 ==  M_up_trace :
+                score += M_up_trace 
+                A_align += str(self._seqA[m_trace-1] )
+                B_align += "_"
+                
+                m_trace += -1
+            elif max_trace2 ==  M_left_trace :
+                score += M_left_trace
+                A_align += "_"
+                B_align += str(self._seqB[n_trace-1] )
+                # print(str(self._seqA[m_trace-1] )) 
+                n_trace += -1
+            print(M[0:m_trace,0:n_trace])
+
+        print(A_align, B_align)
+        
+        print(A_align[::-1])    
+        print(B_align[::-1])
+        print(score)
+        return (self.alignment_score, self.seqA_align, self.seqB_align)
 
 
 def read_fasta(fasta_file: str) -> Tuple[str, str]:
