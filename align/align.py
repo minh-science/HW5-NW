@@ -205,6 +205,21 @@ class NeedlemanWunsch:
         # Calculate alignment score
         self.alignment_score = self._align_matrix[len(self._seqA)][len(self._seqB)]
 
+
+        # Check for gaps and extensions
+        for i in range(len(self.seqA_align)):
+            if i-1 > 0:
+                if (self.seqA_align[i] == "-" or self.seqB_align[i] == "-") == True: 
+                    if (self.seqA_align[i-1] != "-" or self.seqB_align[i-1] != "-") == True:
+                        # print( "gap extend", self.seqA_align[i], self.seqB_align[i] )
+                        # self.alignment_score += self.gap_open
+                        pass
+                if (self.seqA_align[i] == "-" or self.seqB_align[i] == "-") == True:
+                    if(self.seqA_align[i-1] == "-" or self.seqB_align[i-1] == "-") == True:
+                        # print( "gap open", self.seqA_align[i], self.seqB_align[i] )
+                        # self.alignment_score += self.gap_extend
+                        pass
+
         return (self.alignment_score, self.seqA_align, self.seqB_align)
 
 def read_fasta(fasta_file: str) -> Tuple[str, str]: # ALREADY COMPLETE
